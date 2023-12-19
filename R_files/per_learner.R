@@ -1,6 +1,6 @@
-setwd("Documents/corpus_annotation_tp/R_files/")
+setwd("/home/daniela/Documents/thesis/R_files/")
 load(".RData")
-source("term_paper_functions.R")
+source("functions.R")
 library(ggplot2)
 library(gridExtra)
 library("dplyr")
