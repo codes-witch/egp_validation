@@ -37,6 +37,7 @@ def send_requests(text_chunks, url, output_path_text, output_path_csv):
     :param output_path_csv:
     :return:
     """
+    print("In send_requests")
     if len(text_chunks) > 1:
         print("More than one chunk")
     for chunk in text_chunks:
@@ -49,8 +50,8 @@ def send_requests(text_chunks, url, output_path_text, output_path_csv):
         # filename
         filename = os.path.basename(input_path)
         # path to the level subdirectory in the different error folders
-        err_level_path = os.path.join("data/error", level)
-        timeout_level_path = os.path.join("data/timeout", level)
+        err_level_path = os.path.join("data/error_filtered", level)
+        timeout_level_path = os.path.join("data/timeout_filtered", level)
 
         # Set a max time for the request in seconds
         timeout = get_timeout(level, len_words)
@@ -141,7 +142,7 @@ def write_csv_and_txt(data, output_path_text, output_path_csv, chunk, level):
     with open(output_path_text + ".txt", "a") as textfile:
         textfile.write("\n" + chunk)
 
-    update_nwords_file(chunk, level)
+    # update_nwords_file(chunk, level)
 
     print("\n\n")
 
@@ -225,13 +226,16 @@ def update_nwords_file(chunk, level):
 
 
 if __name__ == "__main__":
-    url = "http://localhost:4000/extractor?text="
-    input_dir = "data/input/" # Note that we should never run this from data/timeout/ because even those chunks that
+    url = "http://18.197.58.203/extractor?text="
+    input_dir = "data/input_filtered/" # Note that we should never run this from data/timeout/ because even those chunks that
     # time out will be deleted
-    output_dir = "data/output/"
+    output_dir = "data/output_filtered/"
 
-    for input_path in utils.get_file_paths(input_dir):
+    file_paths = utils.get_file_paths(input_dir)
+    file_paths_len = len(file_paths)
+    for n, input_path in enumerate(file_paths):
         print("Input", input_path)
+        print("File", n, "of", file_paths_len)
         level = os.path.split(input_path)[0][-2:]
         output_path_text = os.path.join(output_dir, level, "text", os.path.split(input_path)[1][:-4])
         output_path_csv = os.path.join(output_dir, level, "csv", os.path.split(input_path)[1][:-4])
