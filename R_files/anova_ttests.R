@@ -6,6 +6,7 @@ c1_normalized_counts_students_long$text_level = "C1"
 c2_normalized_counts_students_long$text_level = "C2"
 
 # put all dataframes of students of different levels together
+# learnerID, feature, total, text level
 normalized_counts_students_long <- bind_rows(a1_normalized_counts_students_long, a2_normalized_counts_students_long, b1_normalized_counts_students_long, b2_normalized_counts_students_long, c1_normalized_counts_students_long, c2_normalized_counts_students_long)
 
 # general mean of each feature
@@ -14,7 +15,7 @@ normalized_counts_students_long %>%
   group_by(feature) %>%
   summarise(avg_freq = mean(total))
 
-# get only feature, text_level and total variables
+# get only feature, text_level and total variables (column)
 normalized_students <- normalized_counts_students_long %>%
   select(feature, text_level, total)
 
@@ -101,7 +102,7 @@ for (f in 1:length(significant_feats)) {
     
 }
 
-
+#NOTE: I did not take into account the fact that in sme levels some features do not appear. I should!
 
 t_tests_p_values <- add_feature_level(t_tests_p_values)
 t_tests_p_values <- rename_column(t_tests_p_values, 7, "EGP_level")
@@ -123,3 +124,51 @@ c1_mismatch <- t_tests_p_values %>%
 
 c2_mismatch <- t_tests_p_values %>%
   filter(EGP_level == "C2", as.numeric(C1_C2) > 0.05)
+
+
+# for each construct, get the mean at each level and make a line plot
+library(ggplot2)
+
+#for (constr in significant_feats){
+normalized_counts_students_long %>%
+  group_by(feature, text_level) %>%
+  filter(feature == 1111) %>%
+  summarise(mean = mean(total)) %>%
+    ggplot(aes(x = text_level, y = mean, color = as.factor(feature), group = feature)) +
+    geom_line() +
+    xlab("Levels") +
+    ylab("Mean frequency of construct") +
+    scale_x_discrete(
+      breaks = c("A1", "A2", "B1", "B2", "C1", "C2"),
+      labels = c("A1", "A2", "B1", "B2", "C1", "C2")
+    ) +
+    ggtitle("Typical C1 construct")
+#}
+
+#for (f in c(148, 475, 740, 1057)) {
+normalized_counts_students_long %>%
+  filter(feature == 1057) %>%
+  group_by(learnerID, text_level) %>%
+  ggplot(aes(x = text_level, y = total, fill = text_level)) +
+  geom_boxplot() +
+  xlab("Text Level") +
+  ylab("Mean of Total") +
+  ggtitle(paste0("Boxplot for feature ", 1057))
+
+
+assignment <- list()
+for (r in 300:310){
+  for (c in 2:6){
+    print(paste0("Row ", r, " Column ", c))
+    print(t_tests_p_values[r, c])
+    
+    if (as.numeric(t_tests_p_values[r, c]) <= 0.05) {
+      print("Lower than 0.05")
+      print(paste0("Construct ID: ", t_tests_p_values$construct_ID[r]))
+      print(paste0("Assigned level: ", names(t_tests_p_values)[c]))
+      break
+    }
+  }
+}
+
+  
