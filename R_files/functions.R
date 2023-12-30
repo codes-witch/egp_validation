@@ -11,11 +11,12 @@ ef_text_2_txt <- function(dataframe, directory) {
   for (i in 1:nrow(dataframe)) {
     # Create a subdir for each level (if it doesn't exist)
     level_directory <- paste0(directory, "/", dataframe$cefr_level[i])
+    learner_id <- dataframe$learnerID[i]
     dir.create(level_directory, showWarnings = FALSE)
     print(level_directory)
     lang_code <- if_else(is.na(dataframe$lang_iso[i]) || dataframe$lang_iso[i] == "", "xx", dataframe$lang_iso[i])
     # filename for each row. Structure: ID_unit_L1.txt
-    filename <- paste0(level_directory, "/", dataframe$id[i], "_", dataframe$unit[i], "_", lang_code,  ".txt")
+    filename <- paste0(level_directory, "/", dataframe$id[i], "_", dataframe$unit[i], "_", lang_code, "_learner", learner_id,   ".txt")
     
     file_conn <- file(filename, open = "w")
 
@@ -535,12 +536,13 @@ get_feat_count_per_level <- function(all_features, directory_path, make_long = T
 }
 
 # Each row in feat_count_per_student corresponds to a student and each column corresponds to a feature. 
-get_feat_count_per_student <- function(all_features, min_num_texts, directory_path, make_long = TRUE) {
+get_feat_count_per_student <- function(all_features, min_num_texts, directory_path=NULL, make_long = TRUE, learner_ids = NULL) {
   
-  
-  # Get students that completed the minimum number of texts at that level
-  learner_ids <- get_learner_ids_by_ntexts_level(directory_path, min_num_texts)
-  
+  if (is.null(learner_ids)){
+    
+    # Get students that completed the minimum number of texts at that level
+    learner_ids <- get_learner_ids_by_ntexts_level_with_directory_path(directory_path, min_num_texts)
+  }
   print("learnerIDs")
 
   print(learner_ids)  
@@ -580,9 +582,8 @@ get_feat_count_per_student <- function(all_features, min_num_texts, directory_pa
 }
 
 
-get_learner_ids_by_ntexts_level <- function(directory_path, min_num_texts) {
+get_learner_ids_by_ntexts_level_with_directory_path <- function(directory_path, min_num_texts) {
   file_list <- list.files(directory_path, pattern = paste0("\\.csv$"), full.names = TRUE, recursive = TRUE)
-  
   # Get only the <learnerID> part
   match_indices <- regexpr("learner\\d+", file_list)
   learner_ids <- regmatches(file_list, match_indices) # at this point we have "learner<ID>"
@@ -676,6 +677,17 @@ get_level_feats <- function(level, dataframe_long){
   return(level_df)
 }
 
+# ----------------------------------------------------
+# ------------ CONSTRUCT-LEVEL ASSIGNMENT ------------
+# ----------------------------------------------------
+# TODO
+#get_first_significant_diff <- function(significance_df){
+#  for (r in 1:nrow(significance_df)){
+    
+#  } 
+#}
+
+
 
 # ----------------------------------------------------
 # ----------------------- MISC -----------------------
@@ -728,3 +740,4 @@ add_clusters_to_long <- function(clusters, df_long) {
   df_long$cluster <- feats_cluster$cluster[match(df_long$feature, feats_cluster$feature)]
   return(df_long)
 }
+
