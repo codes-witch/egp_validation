@@ -72,6 +72,7 @@ names(t_tests_p_values) <- c("feature", "A1_A2", "A2_B1", "B1_B2", "B2_C1", "C1_
 
 
 # For all relevant constructs, do a t-test between all consecutive levels
+# TODO significance matters in terms of which one is higher!! You are missing that info by only taking into account the p-value. 
 for (f in 1:length(significant_feats)) {
     constr <- significant_feats[f]
     p_values <- c()
@@ -79,19 +80,31 @@ for (f in 1:length(significant_feats)) {
       level1 <- levels[i]
       level2 <- levels[i + 1]
       print(paste0("Construct: ", constr))
-      print(paste0("Level 1: ", level1))
-      print(paste0("Level 2: ", level2))
+      #print(paste0("Level 1: ", level1))
+      #print(paste0("Level 2: ", level2))
       
-      # Check that the current feature appears in the level before or in the current level
-      if (sum(filter(normalized_students, text_level %in% c(level1, level2), feature == constr)$total) == 0) { 
-        print(paste0("Contsruct ", constr, " does not appear in any texts written by ", level1, " or ",  level2, " students"))
-      }
+      appears_in_lev1 <- sum(filter(normalized_students, text_level == level1, feature == constr)$total) > 0
+      appears_in_lev2 <- sum(filter(normalized_students, text_level == level2, feature == constr)$total) > 0
+      
+      # Check that the current feature appears in the level before and in the current level
+      if (!appears_in_lev1 | !appears_in_lev2) { 
+        if (!appears_in_lev1 & !appears_in_lev2){
+          print(paste0("Contsruct ", constr, " does not appear in any texts written by ", level1, " or ", level2, " students"))
+        } else if (!appears_in_lev1){
+          print(paste0("Contsruct ", constr, " does not appear in any texts written by ", level1, " students"))
+        } else if (!appears_in_lev2) {
+          print(paste0("Contsruct ", constr, " does not appear in any texts written by ", level2, " students"))
+        }
+        
+        p_values <- append(p_values, NA) 
+      } else { # It must appear in BOTH levels being compared
       
       t_test_result <- normalized_students %>%
         filter(feature == constr, text_level %in% c(level1, level2)) %>%
         t.test(total ~ text_level, data = .)
       
       p_values <- append(p_values, t_test_result$p.value)
+      }
      
     }
     
@@ -102,7 +115,7 @@ for (f in 1:length(significant_feats)) {
     
 }
 
-#NOTE: I did not take into account the fact that in sme levels some features do not appear. I should!
+
 
 t_tests_p_values <- add_feature_level(t_tests_p_values)
 t_tests_p_values <- rename_column(t_tests_p_values, 7, "EGP_level")
@@ -155,20 +168,51 @@ normalized_counts_students_long %>%
   ylab("Mean of Total") +
   ggtitle(paste0("Boxplot for feature ", 1057))
 
+for (col in 2:6) {
+  t_tests_p_values[, col] <- as.numeric(t_tests_p_values[,col])
+}
 
-assignment <- list()
-for (r in 300:310){
+level_prediction <- data.frame(feature = significant_feats) %>%
+  add_feature_level() %>%
+  rename(EGP_level = feat_level) %>%
+  rename(construct = feature) %>%
+  mutate(min_p_pred = NA, first_sign_p_pred = NA, signif_at_EGP_level = NA)
+
+row.names(level_prediction) <- significant_feats
+
+# Find first significant diff
+for (r in 1:nrow(t_tests_p_values)){
   for (c in 2:6){
-    print(paste0("Row ", r, " Column ", c))
-    print(t_tests_p_values[r, c])
+    #print(paste0("Row ", r, " Column ", c))
+    #print(t_tests_p_values[r, c])
     
-    if (as.numeric(t_tests_p_values[r, c]) <= 0.05) {
-      print("Lower than 0.05")
+    if (!is.nan(t_tests_p_values[r, c]) && t_tests_p_values[r, c] <= 0.05) {
+      #print("Lower than 0.05")
       print(paste0("Construct ID: ", t_tests_p_values$construct_ID[r]))
-      print(paste0("Assigned level: ", names(t_tests_p_values)[c]))
+      #print(paste0("Assigned level: ", names(t_tests_p_values)[c]))
+      level_prediction[t_tests_p_values$construct_ID[r], "first_sign_p_pred"] <- str_split_i(names(t_tests_p_values)[c], "_", 2)
       break
     }
   }
 }
 
+# find lowest p-value
+for (r in 1:nrow(t_tests_p_values)){
+
+    #print(paste0("Row ", r, " Column ", c))
+    
+    if (any(rowSums(t_tests_p_values[r, 2:6] <= 0.05, na.rm = TRUE))){
+      column_name <- names(t_tests_p_values)[apply(t_tests_p_values[r,], 1, which.min)]
+      predicted_level <- str_split_i(column_name, "_", 2)
+      #print(paste("Predicted level:", predicted_level))
+      print(paste("Min p-val:", apply(t_tests_p_values[r,], 1, min)))
+      print(paste("Construct ID:", t_tests_p_values$construct_ID[r]))
+      #print(paste("EGP level:", t_tests_p_values[r, "EGP_level"]))
+      level_prediction[t_tests_p_values$construct_ID[r], "min_p_pred"] <- predicted_level
+    }
   
+}
+
+# Answer question: is there a significant different at the level the EGP claims that the construct is criterial for?
+
+
