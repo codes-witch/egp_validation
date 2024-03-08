@@ -543,9 +543,7 @@ get_feat_count_per_student <- function(all_features, min_num_texts, directory_pa
     # Get students that completed the minimum number of texts at that level
     learner_ids <- get_learner_ids_by_ntexts_level_with_directory_path(directory_path, min_num_texts)
   }
-  print("learnerIDs")
 
-  print(learner_ids)  
   # define dataframe:
   feat_count_per_student <- data.frame(matrix(ncol = length(all_features), nrow = length(learner_ids)))
   print(length(learner_ids))
@@ -557,7 +555,7 @@ get_feat_count_per_student <- function(all_features, min_num_texts, directory_pa
   for (id in learner_ids) {
     # get all files by student at that level
     file_list <- list.files(directory_path, pattern = paste0("learner", id,"\\.csv$"), full.names = TRUE, recursive = TRUE)
-    
+    print(paste("File list length for learner", id, ": ", length(file_list)))
     for (file_path in file_list) {
       # Get the features in the file:
       csv_file <- read.csv(file_path)
@@ -680,12 +678,66 @@ get_level_feats <- function(level, dataframe_long){
 # ----------------------------------------------------
 # ------------ CONSTRUCT-LEVEL ASSIGNMENT ------------
 # ----------------------------------------------------
-# TODO
-#get_first_significant_diff <- function(significance_df){
-#  for (r in 1:nrow(significance_df)){
+
+# Fills in the first_sign_p_pred column of the prediction dataframe in with the level prediction. 
+fillFirstSignPrediction <- function(pvals_df, predict_df) {
+  for (r in 1:nrow(pvals_df)){
+    print(pvals_df[r, 1])
+    for (c in 2:6){
+      if(!is.na(pvals_df[r, c])){
+        print(pvals_df[r, c])
+        predict_df$first_sign_p_pred[r] <- str_split_i(colnames(pvals_df)[c], "_", 2)
+        break
+      }
+    }
+  }
+  
+  return(predict_df)
+}
+
+# Fills in the min_p_pred column of the prediction dataframe in with the level prediction. 
+fillLowestPvalPrediction <- function(pvals_df, predict_df){
+  for (r in 1:nrow(pvals_df)){
+    if (any(!is.na(pvals_df[r, 2:6 ]))){
+      # get the name of the column with the minimum p-val
+      column_name <- names(pvals_df)[apply(pvals_df[r, 1:6], 1, which.min)]
+      predicted_level <- str_split_i(column_name, "_", 2)
+      print(predicted_level)
+      print(r)
+      print(predict_df)
+      predict_df[r, "min_p_pred"] <- predicted_level
+    }
     
-#  } 
-#}
+  }
+  
+  return(predict_df)
+  
+}
+
+
+# fill with TRUE or FALSE, whether the construct is significant at the level it belongs to in the EGP
+fillIsSigAtEgpLvl <- function(pval_df, predict_df) {
+  pval_df <- add_feature_level(pval_df)
+  #iterate through the columns, get the second level. If it's the same as feat_level, then TRUE in the prediction df
+  for (row_idx in 1:nrow(pval_df)) {
+    # get the feature of the row:
+    constr_lvl <- pval_df$feat_level[row_idx]
+    
+    # find the column where the second level is that of the construct
+    for (col_idx in 2:6) {
+      colname <- colnames(pval_df)[col_idx]
+      col_second_lvl <- str_split_i(colname, "_", 2)
+      
+      if (col_second_lvl == constr_lvl) {
+        predict_df[row_idx, "signif_at_EGP_level"] <- !is.na(pval_df[row_idx, col_idx])
+      }
+      
+    }
+  }
+  
+  return(predict_df)
+  
+}
 
 
 
@@ -696,48 +748,4 @@ get_text_author_df <- function(ef_dataframe, learner_ids, level) {
   return (ef_dataframe[ef_dataframe$cefr_level == level & ef_dataframe$learnerID %in% learner_ids, c("id", "learnerID")])
 }
   
-  
-create_table_image <- function(dataframe) {
-  # Create a table from the dataframe using the kable function from the knitr package
-  table <- knitr::kable(dataframe)
-  
-  # Convert the table to a grob object
-  table_grob <- tableGrob(table)
-  
-  # Create a blank plot to save the table as an image
-  blank_plot <- ggplot() +
-    theme_void()
-  
-  # Combine the blank plot and table grob using grid.arrange from the gridExtra package
-  combined <- grid.arrange(blank_plot, table_grob, nrow = 2)
-  
-  # Save the combined image as a PNG file
-  ggsave("table.png", combined, width = 10, height = 4, dpi = 300)
-}
-
-#Returns a vector that contains all features in a df that at some level reach a given percentage
-features_reach_percent <- function(dataframe_long, percentage) {
-  v = c();
-  for (r in 1:nrow(dataframe_long)) {
-    if (dataframe_long[r,]$total > percentage) {
-      v <- append(v, dataframe_long[r,]$feature)
-    }
-  }
-  
-  return(unique(v))
-}
-
-feats_between_percents <- function(dataframe_long, lower_bound, upper_bound){
-  v1 <- features_reach_percent(dataframe_long, lower_bound)
-  v2 <- features_reach_percent(dataframe_long, upper_bound)
-  
-  return(setdiff(v1, v2))
-}
-
-add_clusters_to_long <- function(clusters, df_long) {
-  feats <- unique(df_long$feature)
-  feats_cluster <- data.frame("feature" = feats, "cluster" = clusters)
-  df_long$cluster <- feats_cluster$cluster[match(df_long$feature, feats_cluster$feature)]
-  return(df_long)
-}
 
