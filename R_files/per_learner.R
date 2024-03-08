@@ -8,7 +8,7 @@ library("stringr")
 library(tidyr)
 library(tools)
 load("/home/daniela/Documents/corpus_annotation_tp/R_files/ef2_short_lvl.RData")
-load("all_features.txt")
+all_features <- readLines("all_features.txt")
 
 # Create a df for the avg at each level
 feat_level_avg_students <- data.frame(matrix(ncol = length(all_features), nrow = 6))
@@ -17,25 +17,30 @@ rownames(feat_level_avg_students) <- c("a1", "a2", "b1", "b2", "c1", "c2")
 
 # Get students that completed n A1 texts
 
-a1_feat_count_per_student_short <- get_feat_count_per_student(all_features, 24, "text_annotation/data/output_filtered/a1/csv/", learner_ids = learners_a1_full, FALSE)
-a1_feat_count_per_student_long <- get_feat_count_per_student(all_features, 24, "text_annotation/data/output_filtered/a1/csv/", learner_ids = learners_a1_full, TRUE)
+a1_feat_count_per_student_short <- get_feat_count_per_student(all_features, 24, "../text_annotation/data/output_filtered_07032024/a1/csv/", learner_ids = learners_a1_full, FALSE)
+# a1_feat_count_per_student_long <- get_feat_count_per_student(all_features, 24, "../text_annotation/data/output_filtered_07032024/a1/csv/", learner_ids = learners_a1_full, TRUE)
 
-a1_learner_wc <- get_learner_word_count_df(learners_a1_full, "text_annotation/data/output_filtered/a1/text/")
+a1_feat_count_per_student_short <- delete_column(a1_feat_count_per_student_short, "learnerID")
+a1_feat_count_per_student_long <- make_long_feats_df(cbind("learnerID" = rownames(a1_feat_count_per_student_short), a1_feat_count_per_student_short), "learnerID", "total")
+
+
+a1_learner_wc <- get_learner_word_count_df(learners_a1_full, "../text_annotation/data/output_filtered_07032024/a1/text")
 
 # Getthe features with no occurrences
 zero_feats_learner_a1 <- colnames(a1_feat_count_per_student_short[,colSums(a1_feat_count_per_student_short) == 0])
 
 # normalize per 1k words
-a1_normalized_counts_students_short <- a1_feat_count_per_student_short / a1_learner_wc$word_count * 1000 
+a1_normalized_counts_students_short <- a1_feat_count_per_student_short / (a1_learner_wc$word_count * 1000) 
 a1_normalized_counts_students_long <- make_long_feats_df(cbind("learnerID" = rownames(a1_feat_count_per_student_short), a1_normalized_counts_students_short), "learnerID", "total")
 
 # Fill in df with the mean of all features
 feat_level_avg_students["a1",] <- colMeans(a1_normalized_counts_students_short)
 
 # Get students that completed n A2 texts
-a2_feat_count_per_student_short <- get_feat_count_per_student(all_features, 24, "text_annotation/data/output_filtered/a2/csv/", learner_ids = learners_a2_full, FALSE)
+a2_feat_count_per_student_short <- get_feat_count_per_student(all_features, 24, "../text_annotation/data/output_filtered_07032024/a2/csv/", learner_ids = learners_a2_full, FALSE)
 a2_feat_count_per_student_long <- make_long_feats_df(cbind("learnerID" = rownames(a2_feat_count_per_student_short), a2_feat_count_per_student_short), "learnerID", "total")
-a2_learner_wc <- get_learner_word_count_df(learners_a2_full, "text_annotation/data/output_filtered/a2/text/")
+
+a2_learner_wc <- get_learner_word_count_df(learners_a2_full, "../text_annotation/data/output_filtered_07032024/a2/text/")
 
 # Getthe features with no occurrences
 zero_feats_learner_a2 <- colnames(a2_feat_count_per_student_short[,colSums(a2_feat_count_per_student_short) == 0])
@@ -50,9 +55,9 @@ feat_level_avg_students["a2",] <- colMeans(a2_normalized_counts_students_short)
 # -----------------------------
 
 # Get students that completed n B1 texts
-b1_feat_count_per_student_short <- get_feat_count_per_student(all_features, 24, "text_annotation/data/output_filtered/b1/csv/", learner_ids = learners_b1_full, FALSE)
+b1_feat_count_per_student_short <- get_feat_count_per_student(all_features, 24, "../text_annotation/data/output_filtered_07032024/b1/csv/", learner_ids = learners_b1_full, FALSE)
 b1_feat_count_per_student_long <- make_long_feats_df(cbind("learnerID" = rownames(b1_feat_count_per_student_short), b1_feat_count_per_student_short), "learnerID", "total")
-b1_learner_wc <- get_learner_word_count_df(learners_b1_full, "text_annotation/data/output_filtered/b1/text/")
+b1_learner_wc <- get_learner_word_count_df(learners_b1_full, "../text_annotation/data/output_filtered_07032024/b1/text/")
 
 # Getthe features with no occurrences
 zero_feats_learner_b1 <- colnames(b1_feat_count_per_student_short[,colSums(b1_feat_count_per_student_short) == 0])
@@ -67,9 +72,9 @@ feat_level_avg_students["b1",] <- colMeans(b1_normalized_counts_students_short)
 # _______________________________
 
 # Get students that completed n B2 texts
-b2_feat_count_per_student_short <- get_feat_count_per_student(all_features, 24, "text_annotation/data/output_filtered/b2/csv/", learner_ids = learners_b2_full, FALSE)
+b2_feat_count_per_student_short <- get_feat_count_per_student(all_features, 24, "../text_annotation/data/output_filtered_07032024/b2/csv/", learner_ids = learners_b2_full, FALSE)
 b2_feat_count_per_student_long <- make_long_feats_df(cbind("learnerID" = rownames(b2_feat_count_per_student_short), b2_feat_count_per_student_short), "learnerID", "total")
-b2_learner_wc <- get_learner_word_count_df(learners_b2_full, "text_annotation/data/output_filtered/b2/text/")
+b2_learner_wc <- get_learner_word_count_df(learners_b2_full, "../text_annotation/data/output_filtered_07032024/b2/text/")
 
 # Getthe features with no occurrences
 zero_feats_learner_b2 <- colnames(b2_feat_count_per_student_short[,colSums(b2_feat_count_per_student_short) == 0])
@@ -83,9 +88,9 @@ feat_level_avg_students["b2",] <- colMeans(b2_normalized_counts_students_short)
 
 # ____________________________________
 # Get students that completed n C1 texts
-c1_feat_count_per_student_short <- get_feat_count_per_student(all_features, 24, "text_annotation/data/output_filtered/c1/csv/", learner_ids = learners_c1_full, FALSE)
+c1_feat_count_per_student_short <- get_feat_count_per_student(all_features, 24, "../text_annotation/data/output_filtered_07032024/c1/csv/", learner_ids = learners_c1_full, FALSE)
 c1_feat_count_per_student_long <- make_long_feats_df(cbind("learnerID" = rownames(c1_feat_count_per_student_short), c1_feat_count_per_student_short), "learnerID", "total")
-c1_learner_wc <- get_learner_word_count_df(learners_c1_full, "text_annotation/data/output_filtered/c1/text/")
+c1_learner_wc <- get_learner_word_count_df(learners_c1_full, "../text_annotation/data/output_filtered_07032024/c1/text/")
 
 # Getthe features with no occurrences
 zero_feats_learner_c1 <- colnames(c1_feat_count_per_student_short[,colSums(c1_feat_count_per_student_short) == 0])
@@ -99,9 +104,9 @@ feat_level_avg_students["c1",] <- colMeans(c1_normalized_counts_students_short)
  
 # _____________________________________
 # Get students that completed n C2 texts
-c2_feat_count_per_student_short <- get_feat_count_per_student(all_features, 8, "text_annotation/data/output_filtered/c2/csv/", learner_ids = learners_c2_full, FALSE)
+c2_feat_count_per_student_short <- get_feat_count_per_student(all_features, 8, "../text_annotation/data/output_filtered_07032024/c2/csv/", learner_ids = learners_c2_full, FALSE)
 c2_feat_count_per_student_long <- make_long_feats_df(cbind("learnerID" = rownames(c2_feat_count_per_student_short), c2_feat_count_per_student_short), "learnerID", "total")
-c2_learner_wc <- get_learner_word_count_df(learners_c2_full, "text_annotation/data/output_filtered/c2/text/")
+c2_learner_wc <- get_learner_word_count_df(learners_c2_full, "../text_annotation/data/output_filtered_07032024/c2/text/")
 
 # Getthe features with no occurrences
 zero_feats_learner_c2 <- colnames(c2_feat_count_per_student_short[,colSums(c2_feat_count_per_student_short) == 0])
@@ -115,6 +120,9 @@ feat_level_avg_students["c2",] <- colMeans(c2_normalized_counts_students_short)
 
 feat_level_avg_students_long <- make_long_feats_df(cbind("level" =  c("a1", "a2", "b1", "b2", "c1", "c2"), feat_level_avg_students), "level", "total")
 
+
+
+# ######################################## FOR PLOTS #####################################
 a1_for_plot <- get_lvl_feats("a1", feat_level_avg_students_long)
 plot_percentages_level(a1_for_plot, "A1 per student")
 plot_percentages_level(a1_for_plot[a1_for_plot$total < 200 & !(a1_for_plot$feature %in% zero_feats_learner_a1) ,], "A1 per student")
