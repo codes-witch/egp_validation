@@ -160,3 +160,6 @@ t_2side_level_predict <- fillFirstSignPrediction(t_2side_pvals, t_2side_level_pr
 t_1side_level_predict <- fillLowestPvalPrediction(t_1side_pvals, t_1side_level_predict)
 t_2side_level_predict <- fillLowestPvalPrediction(t_2side_pvals, t_2side_level_predict)
 
+# fill in TRUE FALSE, is there a significant difference at the level the EGP says?
+t_1side_level_predict <- fillIsSigAtEgpLvl(t_1side_pvals, t_1side_level_predict)
+t_2side_level_predict <- fillIsSigAtEgpLvl(t_2side_pvals, t_2side_level_predict)
