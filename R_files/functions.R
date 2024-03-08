@@ -608,42 +608,6 @@ get_language_frequencies <- function(directory_path) {
 #--------------------------------------------------------
 #-------------------------PLOTS--------------------------
 #--------------------------------------------------------
-plot_percentages_unit <- function(dataframe_long){
-  dataframe_long$feature <- as.factor(dataframe_long$feature)
-  ggplot(dataframe_long, aes(x = unit, y = percentage, color = feature)) +
-    geom_line() +
-    xlab("Units") +
-    ylab("Percentage of Presence in Texts") +
-    scale_x_continuous(breaks = seq(1, max(dataframe_long$unit), by = 24), labels = seq(1, max(dataframe_long$unit), by = 24))
-}
-
-plot_percentages_level <- function(dataframe_long, plot_title) {
-  dataframe_long$EGP_construct <- as.factor(dataframe_long$feature)
-  # dataframe_long$level <- factor(dataframe_long$level, levels = c("a1", "a2", "b1", "b2", "c1", "c2"))
-  ggplot(dataframe_long, aes(x = level, y = total, color = EGP_construct, group = EGP_construct)) +
-    geom_line() +
-    xlab("Levels") +
-    ylab("Percentage of Presence in Texts") +
-    scale_x_discrete(
-      breaks = c("a1", "a2", "b1", "b2", "c1", "c2"),
-      labels = c("A1", "A2", "B1", "B2", "C1", "C2")
-    ) +
-    ggtitle(plot_title)
-}
-
-plot_cluster_means <- function(cluster_means_long, plot_title){
-  cluster_means_long$cluster <- as.factor(cluster_means_long$cluster)
-  ggplot(cluster_means_long, aes(x = level, y = value, color = cluster, group = cluster)) +
-    geom_line() +
-    xlab("Levels") +
-    ylab("Percentage of Presence in Texts") +
-    scale_x_discrete(
-      breaks = c("a1", "a2", "b1", "b2", "c1", "c2"),
-      labels = c("A1", "A2", "B1", "B2", "C1", "C2")
-    ) +
-    ggtitle(plot_title)
-}
-
 # Make the boxplot by grouping different feature levels - optional vector for ylim
 make_boxpolot_group <- function(df, ylim_vector=NULL){
   ggplot(df, aes(x=level, y=total, fill=feat_level))+
