@@ -13,7 +13,7 @@ median(outer(y, x, "-"))
 wilcox.test(x, y, alternative = "less")
 
 # The second level is higher if the difference in location is negative
-temp_wilc_res <- normalized_students %>%
+temp_wilc_res <- normalized_constr_counts %>%
   filter(feature == 1, text_level %in% c("A1", "A2")) %>%
   wilcox.test(formula = total ~ text_level, data = ., alternative = "less")
 
@@ -54,3 +54,15 @@ for (row_idx in 1:nrow(temp_pval_df)) {
     
   }
 }
+
+
+predict_df <- wcx_1side_level_predict
+predict_df %>%
+  filter(!is.na(signif_at_EGP_level)) %>%
+  count()
+
+predict_df %>% 
+  filter(!is.na(signif_at_EGP_level) & signif_at_EGP_level == TRUE)
+
+
+# Get those features that have NAs in t2 
