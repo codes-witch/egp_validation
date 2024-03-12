@@ -678,6 +678,64 @@ fillLowestPvalPrediction <- function(pvals_df, predict_df){
   
 }
 
+get_exact_precision_recall_f1 <- function(actual, predicted) {
+  if (length(actual) != length(predicted)) {
+    print("Actual and predicted must be same length")
+  }
+  
+  cefr_levels <- c("A2", "B1", "B2", "C1", "C2")
+  result <- data.frame(level = cefr_levels, precision = rep(NA, 5), recall = rep(NA, 5), f1 = rep(NA, 5))
+  
+  total_tp <- 0
+  total_fp <- 0
+  total_fn <- 0
+  for (l in cefr_levels) {
+    tp = 0
+    fp = 0
+    fn = 0
+    
+    for (i in 1:length(actual)) {
+      if(actual[i] == l && predicted[i] == l) {
+        # print("New TP")
+        tp <- tp + 1
+        total_tp <- total_tp + tp
+      } else if (actual[i] == l) {
+        # print("New FN")
+        fn <- fn + 1
+        total_fn <- total_fn + fn
+      } else if (predicted[i] == l) {
+        # print("New FP")
+        fp <- fp +1
+        total_fp <- total_fp + fp
+      }
+    }
+    precision <- NA
+    recall <- NA
+    
+    if (fp + tp != 0){
+      precision <- tp / (fp + tp)
+      result$precision[result$level == l] <- precision
+    } 
+    
+    if (tp + fn != 0) {
+      recall <- tp / (fn + tp)
+      result$recall[result$level == l] <- recall
+    } 
+    
+    
+    if (!is.na(precision) && !is.na(recall)) {
+      f1 <- 2 * (precision * recall) / (precision + recall)
+      result$f1[result$level == l] <- f1
+    }
+  }
+  
+  macro_avg <- data.frame(precision = mean(result$precision, na.rm=TRUE), recall = mean(result$recall, na.rm=TRUE))
+  micro_avg <- data.frame(precision = total_tp/(total_tp + total_fp), recall = total_tp / (total_tp + total_fn))
+  return(list("result" = result, "macro_avg" = macro_avg, "micro_avg" = micro_avg))
+}
+
+
+
 
 # fill with TRUE or FALSE, whether the construct is significant at the level it belongs to in the EGP
 fillIsSigAtEgpLvl <- function(pval_df, predict_df) {
@@ -701,6 +759,19 @@ fillIsSigAtEgpLvl <- function(pval_df, predict_df) {
   
   return(predict_df)
   
+}
+
+# Get the accuracy with regard to 
+accuracyIsSignificantEGPLevel <- function(predict_df) {
+  total_booleans <-predict_df %>%
+    filter(!is.na(signif_at_EGP_level)) %>%
+    count()
+  
+  total_trues <- predict_df %>% 
+    filter(!is.na(signif_at_EGP_level) & signif_at_EGP_level == TRUE) %>%
+    count()
+  
+  return(total_trues/total_booleans)
 }
 
 
