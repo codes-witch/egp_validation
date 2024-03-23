@@ -1,5 +1,5 @@
 setwd("/home/daniela/Documents/thesis/R_files/")
-load("/.RData")
+load("./.RData")
 source("/home/daniela/Documents/thesis/R_files/functions.R")
 library(ggplot2)
 library(gridExtra)
