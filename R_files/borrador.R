@@ -66,3 +66,27 @@ predict_df %>%
 
 
 # Get those features that have NAs in t2 
+
+
+cefr_levels_neighbors <- list("A2"=c("A2", "B1"), "B1" = c("A2", "B1", "B2"), "B2" = c("B1", "B2", "C1") , "C1" = c("B2", "C1", "C2"), "C2" = c("C1", "C2"))
+("C1" %in% cefr_levels["A2"][[1]])
+
+for (l in names(cefr_levels)){
+  print(l)
+}
+
+
+predicted_repl <- c("B1", "B2", "A2", "B1", "C1")
+for (p_idx in 1:length(predicted_repl)) {
+  if (predicted_repl[p_idx] %in% cefr_levels_neighbors["A2"][[1]]) {
+    predicted_repl[p_idx] <- "A2"
+  }
+}
+
+
+# check whether something is one-off or less a given level
+actual_level = "A2"
+predicted_level = "B2"
+
+
+
