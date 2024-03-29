@@ -89,4 +89,31 @@ actual_level = "A2"
 predicted_level = "B2"
 
 
+normalized_counts_students_long %>%
+  filter(feature == 110) %>%
+  group_by(text_level) %>%
+  summarise(median = median(total), mean=mean(total))
+
+
+
+
+# Calculate summary statistics
+min_value <- min(no)
+max_value <- max(normalized_constr_counts$total)
+q1 <- quantile(normalized_constr_counts$total, 0.25)
+q3 <- quantile(normalized_constr_counts$total, 0.75)
+iqr <- q3 - q1
+
+# Calculate the range for the y-axis
+lower_limit <- min(min_value, q1 - 1.5 * iqr)
+upper_limit <- max(max_value, q3 + 1.5 * iqr)
+
+# Create the boxplot
+boxplot(normalized_constr_counts$total, ylim = c(lower_limit, upper_limit))
+
+normalized_counts_students_long %>%
+  get_boxplot_construct(173)
+ 
+normalized_counts_students_long %>%
+  get_lineplot(173)
 
