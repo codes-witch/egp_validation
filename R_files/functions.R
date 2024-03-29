@@ -276,7 +276,7 @@ count_texts_per_unit <- function(directory_path) {
 
 # 6 levels x 2 cols (level, counts). Use for percentages
 count_texts_per_level <- function(directory_path, lang=NULL){
-  file_list <- list.files(directory_path, recursive = TRUE, pattern = "\\.txt$")
+  file_list <- list.files(directory_path, recursive = TRUE, pattern = "\\.csv$")
   level_count_df <- data.frame(level = c("a1", "a2", "b1", "b2", "c1", "c2"), n_texts = 0)
   
   for (file_path in file_list){
@@ -614,6 +614,77 @@ make_boxpolot_group <- function(df, ylim_vector=NULL){
     geom_boxplot(notch = TRUE)+
     labs(fill="Feature level", x="Text level", y="Percentage of presence")+
     coord_cartesian(ylim = ylim_vector)
+}
+
+
+get_boxplot_construct <- function(df, constr_id, title = NULL) {
+  
+  df_filtered <- df %>%
+    filter(feature == constr_id)
+  
+  min_val <- df_filtered %>%
+    pull(total) %>%
+    min()
+  
+  max_val <- df_filtered %>%
+    pull(total) %>%
+    max()
+  
+  q1s = c()
+  q3s = c()
+  
+  for (text_lvl in c("A1", "A2", "B1", "B2", "C1", "C2")){
+    q1 <- quantile(df_filtered$total[df_filtered$text_level == text_lvl], 0.25)
+    print(paste("Q1 for", text_lvl, "=", q1, "Construct", constr_id))
+    q1s = append(q1s, q1)
+    
+    q3 <- quantile(df_filtered$total[df_filtered$text_level == text_lvl], 0.75)
+    print(paste("Q3 for", text_lvl, "=", q3, "Construct", constr_id))
+    q3s = append(q3s, q3)
+  }
+  q1 <- min(q1s)
+  q3 <- max(q3s)
+  
+  iqr <- q3 - q1
+  
+  lower_limit <- 0
+  upper_limit <-q3 + 1.75 * iqr
+  
+  if(upper_limit == 0) {
+    upper_limit = max_val
+  }
+  print(paste("Upper limit", upper_limit ))
+  plot <- df_filtered %>%
+    group_by(learnerID, text_level) %>%
+    ggplot(aes(x = text_level, y = total, fill = text_level)) +
+    geom_boxplot() +
+    labs(x = "Text Level", y = "Normalized frequency", fill = "Text Level") +
+    ggtitle(title) +
+    coord_cartesian(ylim = c(lower_limit, upper_limit))
+  
+  
+  return(plot)
+  
+}
+
+get_lineplot <- function(df, constr_id, title = NULL, ylim_vector=NULL) {
+  plt <- df %>%
+    group_by(feature, text_level) %>%
+    filter(feature == constr_id) %>%
+    summarise(mean = mean(total)) %>%
+    ggplot(aes(x = text_level, y = mean, color = as.factor(feature), group = feature)) +
+    geom_line() +
+    #geom_errorbar(aes(ymin=mean-var, ymax=mean+var), width=.2, position=position_dodge(.9)) 
+    labs(x = "Text Level", y = "Mean frequency of construct", col= "Construct ID") +
+    #xlab("Levels") +
+    #ylab("Mean frequency of construct") +
+    scale_x_discrete(
+      breaks = c("A1", "A2", "B1", "B2", "C1", "C2"),
+      labels = c("A1", "A2", "B1", "B2", "C1", "C2")
+    ) +
+    ggtitle(title)
+  
+  return(plt)
 }
 
 # For getting a dataframe with features of only one level

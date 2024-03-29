@@ -1,30 +1,37 @@
+# For plotting constructs
 
-# for each construct, get the mean at each level and make a line plot
-library(ggplot2)
+#Typical A2 construct
+normalized_constr_counts %>%
+  get_lineplot(110)
 
-#for (constr in anova_sign_constructs){
+line_plot <- normalized_counts_students_long %>%
+  get_lineplot(110)
+
 normalized_counts_students_long %>%
-  group_by(feature, text_level) %>%
-  filter(feature == 1111) %>%
-  summarise(mean = mean(total)) %>%
-  ggplot(aes(x = text_level, y = mean, color = as.factor(feature), group = feature)) +
-  geom_line() +
-  xlab("Levels") +
-  ylab("Mean frequency of construct") +
-  scale_x_discrete(
-    breaks = c("A1", "A2", "B1", "B2", "C1", "C2"),
-    labels = c("A1", "A2", "B1", "B2", "C1", "C2")
-  ) +
-  ggtitle("Typical C1 construct")
-#}
+  get_boxplot_construct(110)
 
-#for (f in c(148, 475, 740, 1057)) {
 normalized_counts_students_long %>%
-  filter(feature == 1057) %>%
-  group_by(learnerID, text_level) %>%
-  ggplot(aes(x = text_level, y = total, fill = text_level)) +
-  geom_boxplot() +
-  xlab("Text Level") +
-  ylab("Mean of Total") +
-  ggtitle(paste0("Boxplot for feature ", 1057))
+  filter(feature == 110) %>%
+  group_by(text_level) %>%
+  summarise(median = median(total), mean=mean(total))
 
+
+# Save boxplots in a file 
+for (construct in t_1side_level_predict$construct) {
+  bp <- normalized_counts_students_long %>%
+    get_boxplot_construct(construct)
+  
+  ggsave(paste0("plots/", t_1side_level_predict[t_1side_level_predict$construct == construct, "EGP_level"], "_", construct, "_boxplot.png"), width= 5.40, height = 4.20, plot = bp)
+  
+  lp <- normalized_constr_counts %>%
+    get_lineplot(construct)
+  
+  ggsave(paste0("plots/", t_1side_level_predict[t_1side_level_predict$construct == construct, "EGP_level"], "_", construct, "_lineplot.png"), width= 5.40, height = 4.20, plot = lp)
+}
+
+normalized 
+normalized_counts_students_long %>%
+  get_boxplot_construct(935)
+
+df_filtered <- normalized_counts_students_long %>%
+  filter(feature == constr_id)
