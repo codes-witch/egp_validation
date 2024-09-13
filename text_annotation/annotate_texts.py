@@ -1,11 +1,15 @@
 import csv
 import os
+from os import times
+
 import requests
 import utils
 import re
 
+timeout_path = "data/timeout_130924"
+error_path = "data/error_130924"
 
-def annotate_text(url, input_path, output_path_text, output_path_csv, max_size=200):
+def annotate_text(url, input_path, output_path_text, output_path_csv, max_size=360):
     """
     Annotates the file in input_path and writes output to a .csv/.txt file
 
@@ -20,7 +24,7 @@ def annotate_text(url, input_path, output_path_text, output_path_csv, max_size=2
     with open(input_path, "r") as infile:
         # Polke can take a max of 500 words, but let's do a max of 200 and hope this is manageable enough
         text = infile.read()
-        words_to_send = text.split()
+        words_to_send = text.split() # split at white spaces - This is just to get a rough word count
 
         # If they are more words than Polke can handle, split at the first end of sentence (EOS) symbol we find and pass
         # it in chunks
@@ -50,8 +54,8 @@ def send_requests(text_chunks, url, output_path_text, output_path_csv):
         # filename
         filename = os.path.basename(input_path)
         # path to the level subdirectory in the different error folders
-        err_level_path = os.path.join("data/error_filtered_07032024", level)
-        timeout_level_path = os.path.join("data/timeout_filtered_07032024", level)
+        err_level_path = os.path.join(error_path, level)
+        timeout_level_path = os.path.join(timeout_path, level)
 
         # Set a max time for the request in seconds
         timeout = get_timeout(level, len_words)
@@ -188,14 +192,19 @@ def get_text_chunks(words_to_send, max_words):
 
 
 def get_timeout(level, len_words):
+    """
+    Adapts timeout to level (harder levels have higher timeouts) and number of words
+    :param level:
+    :param len_words:
+    :return:
+    """
+    timeout = 5
 
-    # if len_words > 150:
-    #     timeout = 15
-    # if level in {"b2", "c1", "c2"}:
-    #     timeout = 30
-    #     print("Text belongs to a difficult level (B2 or greater)")
-
-    timeout = 65
+    if len_words > 150:
+        timeout += 15
+    if level in {"b2", "c1", "c2"}:
+        timeout += 25
+        print("Text belongs to a difficult level (B2 or greater)")
 
     return timeout
 
@@ -229,9 +238,8 @@ def update_nwords_file(chunk, level):
 
 if __name__ == "__main__":
     url = "http://18.192.97.21/extractor?text="
-    input_dir = "data/input_filtered_07032024/" # Note that we should never run this from data/timeout/ because even those chunks that
-    # time out will be deleted
-    output_dir = "data/output_filtered_07032024/"
+    input_dir = "data/input_130924/" # Note that we should never run this script from data/timeout/ because even those chunks that time out will be deleted: Move timed out files to input and try again
+    output_dir = "data/output_130924/"
 
     file_paths = utils.get_file_paths(input_dir)
     file_paths_len = len(file_paths)
